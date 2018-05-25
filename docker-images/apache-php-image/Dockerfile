@@ -1,3 +1,2 @@
-FROM php:7.0-cli
-COPY . /usr/src/HTTP_Lab
-WORKDIR /usr/src/HTTP_Lab
+FROM php:7.0-apache
+COPY src/ /var/www/html/
