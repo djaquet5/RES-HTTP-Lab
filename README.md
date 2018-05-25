@@ -4,7 +4,8 @@
 Start container
 
 ```bash
-$ docker run -d -p 8080:80 php:7.0-cli
+$ docker build -t res/apache_php .
+$ docker run <-d> -p 8080:80 res/apache_php
 ```
 
 To test it :
@@ -16,4 +17,3 @@ $ telnet <IP_address> 8080
 ## Need to check
 
 [Configure Apache Web Server](https://www.digitalocean.com/community/tutorials/how-to-configure-the-apache-web-server-on-an-ubuntu-or-debian-vps)
-
