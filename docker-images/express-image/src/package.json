@@ -1,0 +1,14 @@
+{
+  "name": "students",
+  "version": "0.1.0",
+  "description": "Step 2 of the HTTP lab",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "David Jaquet & Marc Labie",
+  "license": "ISC",
+  "dependencies": {
+    "chance": "^1.0.16"
+  }
+}
