@@ -27,6 +27,16 @@ $ docker build -t res/express_movies
 $ docker run res/express_movies
 ```
 
+## Step 3
+```bash
+$ docker run -d --name apache_static res/apache_php
+$ docker run -d --name express_dynamic res/express_movies
+```
+
+Address of the apache container is 172.17.0.2
+Address of the express container is 172.17.0.3
+**This value can be different**
+
 ## Need to check
 
 [Configure Apache Web Server](https://www.digitalocean.com/community/tutorials/how-to-configure-the-apache-web-server-on-an-ubuntu-or-debian-vps)
