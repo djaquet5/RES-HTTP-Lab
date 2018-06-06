@@ -33,9 +33,34 @@ $ docker run -d --name apache_static res/apache_php
 $ docker run -d --name express_dynamic res/express_movies
 ```
 
-Address of the apache container is 172.17.0.2
-Address of the express container is 172.17.0.3
+Address of the apache container is 172.17.0.2:80
+Address of the express container is 172.17.0.3:3000
 **This value can be different**
+
+this is the ``001-reverse-proxy.conf`` file
+
+```html
+<VirtualHost *:80>
+	ServerName demo.res.ch
+
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+	ProxyPass "/api/movies/" "http://172.17.0.3:3000/"
+	ProxyPassReverse "/api/movies/" "http://172.17.0.3:3000/"
+
+	ProxyPass "/" "http://172.17.0.2:80/"
+	ProxyPassReverse "/" "http://172.17.0.2:80/"
+</VirtualHost>
+```
+
+To enable the site :
+```bash
+$ a2enmod proxy
+$ a2enmod proxy_http
+$ a2ensite 001*
+$ service apache2 reload
+```
 
 ## Need to check
 
