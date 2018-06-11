@@ -1,5 +1,5 @@
 # RES-HTTP-Lab
-## Step 1
+## Step 1 - Static HTTP server with apache httpd
 
 In this step, the goal was to create a html webpage and store it in an appache PHP server, located in a docker container. 
 
@@ -88,7 +88,7 @@ in this repository you'll find two configuration file. One of them is called **0
 
 
 
-## Step 2
+## Step 2 - Dynamic HTTP server with express.js
 
 For this step, the goal was to create a dynamic web page using node.js , rather then a static one as we did in the step 1.
 
@@ -131,9 +131,9 @@ $ docker run res/express_movies
 
 
 
-## Step 3
+## Step 3 - Reverse proxy with apache (static configuration)
 
-For this step, the goal was to create a proxy to reach the containers of the last steps with a single address. We choose to use the same address as the webcast. The address is ``demo.res.ch``
+For this step, the goal was to create a proxy to reach the containers of the last steps with a single address. We choose to use the same address as the webcast. The address is ``demo.res.ch``.
 
 ```bash
 $ docker run -d --name apache_static res/apache_php
@@ -153,6 +153,8 @@ COPY conf/ /etc/apache2
 RUN a2enmod proxy proxy_http
 RUN a2ensite 000-* 001-*
 ```
+
+### VirtualHosts
 
 In the ``conf`` folder, we have a folder ``sites-available`` with 2 Virtualhosts inside. The 2 files are ``000-default.conf`` and ``01-reverse-proxy.conf``. The content of these files is below.
 
@@ -193,6 +195,8 @@ Here's the result :
 
 **This value can be different depending on wich container we start first and if we have different containers running.**
 
+### Hosts file
+
 The browser need to send a specific header to know where redirect the request. To do that, we have to change the DNS configuration :
 ```bash
 $ sudo vi /etc/hosts # Sudo is to give the save right
@@ -216,9 +220,7 @@ ff02::2 ip6-allrouters
 
 The configuration is fragile because the IP addresses that we wrote in the ``hosts`` dans the virtualhost file.
 
-We can improve the configuration by setting the addresses dynamically.
-
-# EXPLIQUEZ COMMENT METTRE LES ADRESSES DYNAMIQUES
+We can improve the configuration by setting the addresses dynamically. The configuration will be improved in the step 5
 
 ### Build it and test it
 
@@ -234,6 +236,78 @@ Then, to test it, you have to launch a browser and navigate on the address ``dem
 # You can explain and prove that the static and dynamic servers cannot be reached directly (reverse proxy is a single entry point in the infra). - DOES NOT WORK
 
 
+
+## Step 4 - AJAX requests with JQuery
+
+For this step, the goal is to setup an AJAX request with JQuery. The request will display the first movie get in the ``demo.res.ch/api/movies/`` page.
+
+### Javascript
+
+We create the javascript file in the ``apache-php-image/src/js/`` folder with the others javascript files. Below, the content of the file ``movies.js``
+
+```javascript
+$(function(){
+    console.log("Loading movies...");
+
+    function loadMovies(){
+        $.getJSON( "/api/movies/", function( movies ) {
+            console.log(movies);
+
+            var message = "No movie is planned :(";
+
+            if(movies.length > 0)
+                message = movies[0].name;
+
+            $("#movies").text("Next movies: " + message);
+        });
+    }
+
+    loadMovies();
+    setInterval(loadMovies, 2000);
+
+    console.log("Movies loaded");
+});
+```
+
+When the page is ready, we get some random movies from the page ``/api/movies/``. Then, we edit a HTML tag to write the next movie. We display only the name of the first movie like shown in the webcast by accessing the tag with the id ``movies``. In the last part, we set an interval to reload the movies. Here, we reload the movies every 2 seconds.
+
+### HTML
+
+To see the movies, we edit the header to add a ``span`` tag with the id ``movies`` as shown below : 
+
+```html
+<!-- Header -->
+<header class="masthead">
+	<div class="container">
+		<div class="intro-text">
+			<div class="intro-lead-in">Welcome To Our Laboratory HTTP!</div>
+			<div class="intro-heading text-uppercase">It's Nice To Meet You</div>
+			<span>As you can see, we didn't take the same as you in the webcast ;-)</span>
+            <br />
+            <span id="movies"></span>
+        </div>
+    </div>
+</header>
+```
+
+Then we import the javascript file :
+
+``` html
+<!-- Custom script to load movies -->
+<script src="js/movies.js"></script>
+```
+
+### Test it
+
+To test the AJAX request, start by running the container. Be careful to start its in the right order :
+
+```bash
+$ docker run --name apache_static res/apache_php
+$ docker run --name express_dynamic res/express_movies
+$ docker run --name apache_rp -p 8080:80 res/apache_rp
+```
+
+Then, access to the address ``demo.res.ch`` with a web browser and see the last text in the header change every 2 seconds.
 
 ## Need to check
 
