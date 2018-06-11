@@ -154,6 +154,8 @@ RUN a2enmod proxy proxy_http
 RUN a2ensite 000-* 001-*
 ```
 
+We enable the modules ``proxy`` and ``proxy_http`` with the command ``a2enmod``. The sites are enabled with the method ``a2ensite``.
+
 ### VirtualHosts
 
 In the ``conf`` folder, we have a folder ``sites-available`` with 2 Virtualhosts inside. The 2 files are ``000-default.conf`` and ``01-reverse-proxy.conf``. The content of these files is below.
@@ -308,6 +310,160 @@ $ docker run --name apache_rp -p 8080:80 res/apache_rp
 ```
 
 Then, access to the address ``demo.res.ch`` with a web browser and see the last text in the header change every 2 seconds.
+
+## Step 5
+
+In this step, the goal was to generate the reverse proxy's static web server and and dynamic web server ip address dynamicly, rather then having them staticly written in the reverse proxy container configuration file.
+
+### Step 5.a
+
+when running a container, using the command :
+
+```bash
+$ docker run -d -p 8080:80 res/apache_rp
+```
+
+we actually can add environment variable, that will be set in the container. For this, we'll need to add the **-e** parameter to the command, followed by our variables and their value, like this :
+
+```bash
+$ docker run -d  -e <variable1>=<value1> -e <variable2>=<value2> .... -p 8080:80 res/apache_rp
+```
+
+This will allow us to run a container and use informations given in those environment variables without modifying the container.
+
+### Step 5.b
+
+On the [github](https://github.com/docker-library/php/tree/78125d0d3c32a87a05f56c12ca45778e3d4bb7c9/7.0/stretch/apache) page of the php apache server, we can find a dockerfile, in which appears the following lines at the end :
+
+```dockerfile
+COPY apache2-foreground /usr/local/bin/
+WORKDIR /var/www/html
+
+EXPOSE 80
+CMD ["apache2-foreground"]		# last line of the Dockerfile
+```
+
+So, when running the docker container, it will run the script called **apache2-foreground**.
+We are going to create a new script, with the same way, and replace the old one. What it would do, is exactly the same, but we'll add a few commands to go and get our environment variable and do something with them.
+
+So what we first did was to create a new script, called  **apache2-foreground**, and copy paste the old script in thise new file.
+then, we added those 3 lines :
+
+```bash
+# Labo HTTP RES
+echo "Setup for the RES lab"
+echo "Static app URL  : $STATIC_APP"
+echo "Dynamic app URL : $DYNAMIC_APP"
+```
+
+This allows us to be sure that the variables $STATIC_APP and $DYNAMIC_APP have been found, and show their value.
+What we have left to do is modify the Dockerfile. We want to copy the new script in then container when building the container, so once we run it, it will run the new one :
+
+```dockerfile
+FROM php:7.0-apache
+
+# Adding our apache script in the bin directory
+COPY apache2-foreground /usr/local/bin/
+
+COPY conf/ /etc/apache2
+
+RUN a2enmod proxy proxy_http
+RUN a2ensite 000-* 001-*
+```
+
+### Step 5.c
+
+In this step, the goal was to create a php script to get those variable and create a configuration file that we will use in the step 4.
+This configuration file will contain the address and port on which the static webserver and the dynamic web server will run.
+
+First, we create a templates directory, in which we create a file named **config-template.php**.
+The configuration file we are going to create is the same one we created with our reverse proxy : **001-reverse-proxy.conf**, except this one will have a dynamic address :
+
+```html
+<VirtualHost *:80>
+	ServerName demo.res.ch
+
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+	ProxyPass "/api/movies/" "http://<DYNAMIC_WEB_SERVER_DYNAMIC_ADDRESS>/"
+	ProxyPassReverse "/api/movies/" "http://<DYNAMIC_WEB_SERVER_DYNAMIC_ADDRESS>/"
+
+	ProxyPass "/" "http://<STATIC_WEB_SERVER_DYNAMIC_ADDRESS>/"
+	ProxyPassReverse "/" "http://<STATIC_WEB_SERVER_DYNAMIC_ADDRESS>/"
+</VirtualHost>
+```
+
+So in our php file, we wrote this code :
+
+```php
+<?php 
+$dynamic_app = getenv('DYNAMIC_APP');
+$static_app  = getenv('STATIC_APP');
+?>
+
+<VirtualHost *:80>
+	ServerName demo.res.ch
+
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+	ProxyPass "/api/movies/" "http://<?php print $dynamic_app ?>/"
+	ProxyPassReverse "/api/movies/" "http://<?php print $dynamic_app ?>/"
+
+	ProxyPass "/" "http://<?php print $static_app ?>/"
+	ProxyPassReverse "/" "http://<?php print $static_app ?>/"
+</VirtualHost>
+```
+
+So what this script does is getting the environments variables value and print them at the previous address place. 
+Note that we could have used a bash script, using the ```$echo``` command aswell.
+
+We now have a script creating a dynamic configuration file for our reverse proxy container.
+
+### Step 5.d
+
+What we have to do now is to write this configuration in the configuration location once the container is runed.
+So we first need to modify our dockerfile, for him to take our template and put it in the container : 
+
+```dockerfile
+FROM php:7.0-apache
+
+# Adding our apache script in the bin directory
+COPY apache2-foreground /usr/local/bin/
+
+# Adding our templates to the templates directory of our container
+COPY templates /var/apache2/templates
+
+COPY conf/ /etc/apache2
+
+RUN a2enmod proxy proxy_http
+RUN a2ensite 000-* 001-*
+```
+
+The script is now in our container. But it will do nothing untill we call it. What we are going to do is call it from our **apache2-foreground** script : 
+
+```bash
+# Labo HTTP RES
+echo "Setup for the RES lab"
+echo "Static app URL  : $STATIC_APP"
+echo "Dynamic app URL : $DYNAMIC_APP"
+
+php /var/apache2/templates/config-template.php	#calling the php script
+```
+
+But this is not enough. Here the script will only be called, and will show the resultat in the terminal. What we want is to write the result in the configuraiton file, locate in **/etc/apache2/sites-available/001-reverse-proxy.conf** , so we are going to redirect our result in this file, and overwrite its acutal content :
+
+```bash
+# Labo HTTP RES
+echo "Setup for the RES lab"
+echo "Static app URL  : $STATIC_APP"
+echo "Dynamic app URL : $DYNAMIC_APP"
+
+php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.conf
+```
+
+
 
 ## Need to check
 
