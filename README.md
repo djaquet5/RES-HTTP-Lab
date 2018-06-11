@@ -323,10 +323,10 @@ when running a container, using the command :
 $ docker run -d -p 8080:80 res/apache_rp
 ```
 
-we actually can add environment variable, that will be set in the container. For this, we'll need to add the **-e** parameter to the command, followed by our variables and their value, like this :
+We actually can add environment variable, that will be set in the container. For this, we'll need to add the **-e** parameter to the command, followed by our variables and their value, like this :
 
 ```bash
-$ docker run -d  -e <variable1>=<value1> -e <variable2>=<value2> .... -p 8080:80 res/apache_rp
+$ docker run -d -e <variable1>=<value1> -e <variable2>=<value2> .... -p 8080:80 res/apache_rp
 ```
 
 This will allow us to run a container and use informations given in those environment variables without modifying the container.
@@ -347,7 +347,7 @@ So, when running the docker container, it will run the script called **apache2-f
 We are going to create a new script, with the same way, and replace the old one. What it would do, is exactly the same, but we'll add a few commands to go and get our environment variable and do something with them.
 
 So what we first did was to create a new script, called  **apache2-foreground**, and copy paste the old script in thise new file.
-then, we added those 3 lines :
+Then, we added those 3 lines :
 
 ```bash
 # Labo HTTP RES
@@ -356,8 +356,8 @@ echo "Static app URL  : $STATIC_APP"
 echo "Dynamic app URL : $DYNAMIC_APP"
 ```
 
-This allows us to be sure that the variables $STATIC_APP and $DYNAMIC_APP have been found, and show their value.
-What we have left to do is modify the Dockerfile. We want to copy the new script in then container when building the container, so once we run it, it will run the new one :
+This allows us to be sure that the variables ``$STATIC_APP`` and ``$DYNAMIC_APP`` have been found, and show their value.
+What we have left to do is to modify the Dockerfile. We want to copy the new script in then container when building the container, so once we run it, it will run the new one :
 
 ```dockerfile
 FROM php:7.0-apache
