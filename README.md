@@ -465,9 +465,97 @@ php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/00
 
 ## Bonus steps
 
-### Loab balancing : multiple server nodes
+### Load balancing : multiple server nodes
 
+First, we have to enable the Apache modules for the load balancing. Edit the ``Dockerfile`` of the reverse proxy image like below :
 
+```dockerfile
+FROM php:7.0-apache
+
+RUN apt-get update &&\
+    apt-get install -y vim
+
+# Adding our apache script in the bin directory
+COPY apache2-foreground /usr/local/bin/
+
+# Adding our templates to the apache2 directory of our container.
+COPY templates /var/apache2/templates
+
+COPY conf/ /etc/apache2
+
+RUN a2enmod proxy proxy_http proxy_balancer lbmethod_byrequests
+RUN a2ensite 000-* 001-*
+```
+
+We had the modules ``proxy_balancer`` and ``lbmethod_byrequests``
+
+We didn't want to overwrite our old configuration file so we created a new one called ``config-template-load-balancer.php``. So, we have to edit the ``apache2-foreground`` file. We just edit the display of the URLs and the copy of the configuration file
+
+```bash
+# Labo HTTP RES
+echo "Setup for the RES lab"
+echo "Static app (1) URL  : $STATIC_APP_1"
+echo "Static app (2) URL  : $STATIC_APP_2"
+echo "Dynamic app (1) URL : $DYNAMIC_APP_1"
+echo "Dynamic app (2) URL : $DYNAMIC_APP_2"
+
+php /var/apache2/templates/config-template-load-balancer.php > /etc/apache2/sites-available/001-reverse-proxy.conf
+```
+
+Now, we can write the new configuration file. According to the Apache's documentation we have to write some "Proxy balancer" tags to use its in the ``ProxyPass`` and the `ProxyPassReverse`. Below the configuration file :
+
+```php
+<?php
+	$dynamic_app_1 = getenv('DYNAMIC_APP_1');
+	$dynamic_app_2 = getenv('DYNAMIC_APP_2');
+	$static_app_1  = getenv('STATIC_APP_1');
+	$static_app_2  = getenv('STATIC_APP_2');
+?>
+
+<VirtualHost *:80>
+	ServerName demo.res.ch
+
+	#ErrorLog ${APACHE_LOG_DIR}/error.log
+	#CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+    <Proxy "balancer://movies">
+        BalancerMember "http://<?php print $dynamic_app_1 ?>"
+        BalancerMember "http://<?php print $dynamic_app_2 ?>"
+    </Proxy>
+    ProxyPass        "/api/movies/" "balancer://movies/"
+    ProxyPassReverse "/api/movies/" "balancer://movies/"
+
+    <Proxy "balancer://php">
+        BalancerMember "http://<?php print $static_app_1 ?>"
+        BalancerMember "http://<?php print $static_app_2 ?>"
+    </Proxy>
+	ProxyPass        "/" "balancer://php/"
+	ProxyPassReverse "/" "balancer://php/"
+
+</VirtualHost>
+```
+
+#### To test it : 
+
+From the ``docker-images`` folder :
+
+```bash
+$ docker run -d --name apache_static_1 res/apache_php apache-php-image
+$ docker run -d --name apache_static_2 res/apache_php apache-php-image
+$ docker run -d --name express_dynamic_1 res/express_movies express-image
+$ docker run -d --name express_dynamic_2 res/express_movies express-image
+
+$ docker run -d -e STATIC_APP_1=<IpStatic1>:80 -e STATIC_APP_2=<IpStatic2>:80 -e DYNAMIC_APP_1=<IpDynamic1>:3000 -e DYNAMIC_APP_2=<IpDynamic1>:3000 --name apache_rp -p 8080:80 res/apache_rp
+```
+
+Now that all containers are started, use your browser to go on ``demo.res.ch`` and see the IP address of the current host. If the host is ``apache_static_1`` run the following commands :
+
+```bash
+$ docker kill apache_static_1
+$ docker rm apache_static_1
+```
+
+Now reload the page on your browser and see the host's address changed.
 
 ### Load balancing : round-robin vs sticky sessions
 

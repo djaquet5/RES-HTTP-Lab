@@ -1,8 +1,8 @@
 <?php
-$dynamic_app_1 = getenv('DYNAMIC_APP_1');
-$dynamic_app_2 = getenv('DYNAMIC_APP_2');
-$static_app_1  = getenv('STATIC_APP_1');
-$static_app_2  = getenv('STATIC_APP_2');
+    $dynamic_app_1 = getenv('DYNAMIC_APP_1');
+    $dynamic_app_2 = getenv('DYNAMIC_APP_2');
+    $static_app_1  = getenv('STATIC_APP_1');
+    $static_app_2  = getenv('STATIC_APP_2');
 ?>
 
 <VirtualHost *:80>
