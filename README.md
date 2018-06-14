@@ -463,6 +463,18 @@ echo "Dynamic app URL : $DYNAMIC_APP"
 php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.conf
 ```
 
+## Bonus steps
+
+### Loab balancing : multiple server nodes
+
+
+
+### Load balancing : round-robin vs sticky sessions
+
+
+
+### Management UI
+
 
 
 ## Need to check
