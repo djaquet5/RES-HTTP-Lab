@@ -17,7 +17,7 @@ echo "Static app (2) URL  : $STATIC_APP_2"
 echo "Dynamic app (1) URL : $DYNAMIC_APP_1"
 echo "Dynamic app (2) URL : $DYNAMIC_APP_2"
 
-php /var/apache2/templates/config-template-load-balancer.php > /etc/apache2/sites-available/001-reverse-proxy.conf
+php /var/apache2/templates/config-template-load-balancer-sticky.php > /etc/apache2/sites-available/001-reverse-proxy.conf
 
 
 # Apache gets grumpy about PID files pre-existing
