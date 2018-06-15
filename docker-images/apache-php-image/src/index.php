@@ -55,6 +55,8 @@
           <span id="movies"></span>
           <br />
           <span>Current IP Address: <?= $_SERVER['SERVER_ADDR'] ?></span>
+          <br />
+          <span id="host"></span>
         </div>
       </div>
     </header>

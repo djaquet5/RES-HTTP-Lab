@@ -6,11 +6,15 @@ $(function(){
             console.log(movies);
 
             var message = "No movie is planned :(";
+            var express = "";
 
-            if(movies.length > 0)
+            if(movies.length > 0){
                 message = movies[0].name;
+                express = movies[0].ipAddress;
+            }
 
             $("#movies").text("Next movies: " + message);
+            $("#host").text("Express IP: " + express);
         });
     }
 
