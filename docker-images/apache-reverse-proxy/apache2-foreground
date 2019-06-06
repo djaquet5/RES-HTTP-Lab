@@ -12,10 +12,12 @@ fi
 
 # Labo HTTP RES
 echo "Setup for the RES lab"
-echo "Static app URL  : $STATIC_APP"
-echo "Dynamic app URL : $DYNAMIC_APP"
+echo "Static app (1) URL  : $STATIC_APP_1"
+echo "Static app (2) URL  : $STATIC_APP_2"
+echo "Dynamic app (1) URL : $DYNAMIC_APP_1"
+echo "Dynamic app (2) URL : $DYNAMIC_APP_2"
 
-php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.conf
+php /var/apache2/templates/config-template-load-balancer-sticky.php > /etc/apache2/sites-available/001-reverse-proxy.conf
 
 
 # Apache gets grumpy about PID files pre-existing

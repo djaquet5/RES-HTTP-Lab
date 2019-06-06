@@ -53,6 +53,8 @@
 	      <span>As you can see, we didn't take the same as you in the webcast ;-)</span>
           <br />
           <span id="movies"></span>
+          <br />
+          <span>Current IP Address: <?= $_SERVER['SERVER_ADDR'] ?></span>
         </div>
       </div>
     </header>
