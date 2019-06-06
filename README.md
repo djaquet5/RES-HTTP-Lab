@@ -235,8 +235,6 @@ $ docker run --name apache_rp -p 8080:80 res/apache_rp
 
 Then, to test it, you have to launch a browser and navigate on the address ``demo.res.ch:8080`` to access to the ``apache_static`` container and navigate on the address ``demo.res.ch:8080/api/movies/`` to access to the ``express_dynamic`` container.
 
-# You can explain and prove that the static and dynamic servers cannot be reached directly (reverse proxy is a single entry point in the infra). - DOES NOT WORK
-
 
 
 ## Step 4 - AJAX requests with JQuery
@@ -310,6 +308,8 @@ $ docker run --name apache_rp -p 8080:80 res/apache_rp
 ```
 
 Then, access to the address ``demo.res.ch`` with a web browser and see the last text in the header change every 2 seconds.
+
+
 
 ## Step 5
 
@@ -463,6 +463,8 @@ echo "Dynamic app URL : $DYNAMIC_APP"
 php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.conf
 ```
 
+
+
 ## Bonus steps
 
 ### Load balancing : multiple server nodes
@@ -563,9 +565,21 @@ Now reload the page on your browser and see the host's address changed.
 
 ### Management UI
 
+For the management UI, we choose to use [Portainer](https://portainer.io/). It is a really intuitive GUI to manage environments like docker container.
 
+To run Portainer, use the following command : 
 
-## Need to check
+```bash
+$ docker volume create portainer_data
+$ docker run -d -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer
+```
 
-[Configure Apache Web Server](https://www.digitalocean.com/community/tutorials/how-to-configure-the-apache-web-server-on-an-ubuntu-or-debian-vps)
-[Anatomy of an HTTP Transaction](https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/)
+You'll just need to access the port 9000 of the Docker engine where portainer is running using your browser. 
+
+**Note**: the `-v /var/run/docker.sock:/var/run/docker.sock` option can be used in Linux environments only.
+
+You can see more information about the Portainer installation on the [official website](https://portainer.io/install.html).
+
+If it is not already done, you have to build your images docker. When this is done, you can create a new containers. Be careful, to set the good environment variable.
+
+When you validate the creation of the container, Portainer will start it. You can run / stop / restart / ... your containers easily.
